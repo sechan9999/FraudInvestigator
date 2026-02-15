@@ -49,11 +49,11 @@ export default function AiReportSummary({ apiKey, dashboardData, onConfigureApi 
   };
 
   return (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 mb-4">
+    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm mb-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="font-semibold text-white text-sm">AI Executive Summary</h3>
-          <p className="text-xs text-slate-500">Powered by OpenAI</p>
+          <h3 className="font-semibold text-gray-900 text-sm">AI Executive Summary</h3>
+          <p className="text-xs text-gray-400">Powered by OpenAI</p>
         </div>
         {!loading && (
           <button
@@ -70,26 +70,26 @@ export default function AiReportSummary({ apiKey, dashboardData, onConfigureApi 
 
       {loading && (
         <div className="flex items-center gap-2 py-4">
-          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-blue-400">Generating executive summary...</span>
+          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-blue-600">Generating executive summary...</span>
         </div>
       )}
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-500">
           {error}
         </div>
       )}
 
       {summary && !loading && (
-        <div className="p-3 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 rounded-lg">
-          <div className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{summary}</div>
+        <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+          <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{summary}</div>
         </div>
       )}
 
       {!summary && !loading && !error && (
         <div className="py-4 text-center">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-400">
             {apiKey
               ? "Click \"Generate Summary\" to create an AI-powered executive summary from your dashboard data."
               : "Configure your OpenAI API key to enable AI-powered summaries."}

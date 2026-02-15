@@ -45,20 +45,20 @@ export default function ApiKeyModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
-        className="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-md mx-4"
+        className="bg-white border border-gray-200 rounded-2xl p-5 w-full max-w-md mx-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold text-white">
+          <h3 className="text-base font-bold text-gray-900">
             OpenAI API Settings
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-lg"
+            className="text-gray-400 hover:text-gray-600 text-lg"
           >
             x
           </button>
@@ -66,7 +66,7 @@ export default function ApiKeyModal({
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">
+            <label className="text-xs font-medium text-gray-600 block mb-1">
               API Key
             </label>
             <input
@@ -77,17 +77,17 @@ export default function ApiKeyModal({
                 setStatus("idle");
               }}
               placeholder="sk-..."
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {status === "valid" && (
-            <p className="text-xs text-green-400 font-medium">
+            <p className="text-xs text-green-600 font-medium">
               Connected successfully
             </p>
           )}
           {status === "invalid" && (
-            <p className="text-xs text-red-400 font-medium">
+            <p className="text-xs text-red-500 font-medium">
               Invalid API key. Please check and try again.
             </p>
           )}
@@ -96,7 +96,7 @@ export default function ApiKeyModal({
             <button
               onClick={handleTest}
               disabled={!inputKey.trim() || testing}
-              className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-medium hover:bg-slate-600 disabled:opacity-50"
+              className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 disabled:opacity-50"
             >
               {testing ? "Testing..." : "Test Connection"}
             </button>
@@ -109,13 +109,13 @@ export default function ApiKeyModal({
             </button>
             <button
               onClick={handleClear}
-              className="py-2 px-3 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/20"
+              className="py-2 px-3 bg-red-50 text-red-500 rounded-lg text-xs font-medium hover:bg-red-100"
             >
               Clear
             </button>
           </div>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-400">
             Your API key is stored in memory only and never persisted to disk.
             You can also set OPENAI_API_KEY as a Vercel environment variable.
           </p>
