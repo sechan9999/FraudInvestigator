@@ -10,6 +10,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
+  CartesianGrid,
   ResponsiveContainer,
   AreaChart,
   Area,
@@ -114,12 +116,34 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [claimSearch, setClaimSearch] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [throughputHistory, setThroughputHistory] = useState<{time: string; value: number}[]>([]);
   const [liveActivity, setLiveActivity] = useState<LiveActivity[]>([
     { id: 1, time: "14:23:45", claim: "CLM-1847", provider: "PRV032", amount: 2400, risk: 0.23, status: "processing", agent: "Statistical" },
     { id: 2, time: "14:23:43", claim: "CLM-1846", provider: "PRV089", amount: 8900, risk: 0.87, status: "flagged", agent: "ML Pattern" },
     { id: 3, time: "14:23:41", claim: "CLM-1845", provider: "PRV012", amount: 450, risk: 0.12, status: "approved", agent: "Rule" },
   ]);
   const [throughput, setThroughput] = useState({ current: 73, peak: 95, avg: 68 });
+  const [kpis, setKpis] = useState({ totalClaims: 1250, fraudDetected: 45, pendingReview: 12, savingsAmount: 450000 });
+  const [lastRefresh, setLastRefresh] = useState<string>("");
+
+  // Fetch dashboard data from API with auto-refresh
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (res.ok) {
+          const data = await res.json();
+          setKpis(data.kpis);
+          setLastRefresh(new Date().toLocaleTimeString("en-US", { hour12: false }));
+        }
+      } catch { /* silently retry on next interval */ }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (activeNav !== "realtime") return;
@@ -135,11 +159,16 @@ export default function Dashboard() {
         agent: ["Statistical", "ML Pattern", "Rule", "Feature", "Graph"][Math.floor(Math.random() * 5)],
       };
       setLiveActivity((prev) => [newClaim, ...prev.slice(0, 19)]);
+      const newThroughputValue = Math.floor(Math.random() * 30) + 60;
       setThroughput((prev) => ({
-        current: Math.floor(Math.random() * 30) + 60,
+        current: newThroughputValue,
         peak: Math.max(prev.peak, prev.current),
         avg: Math.floor(prev.avg * 0.9 + prev.current * 0.1),
       }));
+      setThroughputHistory((prev) => [
+        ...prev.slice(-19),
+        { time: new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }), value: newThroughputValue },
+      ]);
     }, 2000);
     return () => clearInterval(interval);
   }, [activeNav]);
@@ -165,7 +194,19 @@ export default function Dashboard() {
     { id: "CLM-002", provider: "PRV045", amount: 450, risk: "low", score: 0.15, status: "approved" },
     { id: "CLM-003", provider: "PRV002", amount: 2300, risk: "high", score: 0.78, status: "review" },
     { id: "CLM-004", provider: "PRV078", amount: 180, risk: "low", score: 0.08, status: "approved" },
+    { id: "CLM-005", provider: "PRV032", amount: 5600, risk: "high", score: 0.81, status: "flagged" },
+    { id: "CLM-006", provider: "PRV089", amount: 320, risk: "low", score: 0.12, status: "approved" },
+    { id: "CLM-007", provider: "PRV015", amount: 7800, risk: "critical", score: 0.95, status: "flagged" },
+    { id: "CLM-008", provider: "PRV056", amount: 1100, risk: "medium", score: 0.45, status: "review" },
+    { id: "CLM-009", provider: "PRV003", amount: 4200, risk: "high", score: 0.73, status: "review" },
+    { id: "CLM-010", provider: "PRV091", amount: 290, risk: "low", score: 0.06, status: "approved" },
   ];
+
+  const filteredClaims = recentClaims.filter((claim) => {
+    if (!claimSearch) return true;
+    const q = claimSearch.toLowerCase();
+    return claim.id.toLowerCase().includes(q) || claim.provider.toLowerCase().includes(q) || claim.risk.includes(q);
+  });
 
   const modelPerformance = [
     { name: "Statistical", accuracy: 94.2, f1: 90.6, drift: 0.03 },
@@ -205,10 +246,10 @@ export default function Dashboard() {
   ];
 
   const dashboardContext = {
-    totalClaims: 1250,
-    fraudDetected: 45,
-    pendingReview: 12,
-    savings: "$450K",
+    totalClaims: kpis.totalClaims,
+    fraudDetected: kpis.fraudDetected,
+    pendingReview: kpis.pendingReview,
+    savings: `$${Math.round(kpis.savingsAmount / 1000)}K`,
     recentClaims,
     riskDistribution,
     agentContribution,
@@ -251,8 +292,25 @@ export default function Dashboard() {
     <>
       <style>{styles}</style>
       <div className="min-h-screen bg-gray-50 flex text-sm">
+        {/* Mobile sidebar toggle */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden fixed top-3 left-3 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {sidebarOpen
+              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+          </svg>
+        </button>
+
+        {/* Sidebar overlay for mobile */}
+        {sidebarOpen && (
+          <div className="lg:hidden fixed inset-0 bg-black/30 z-30" onClick={() => setSidebarOpen(false)} />
+        )}
+
         {/* Sidebar */}
-        <div className="w-52 bg-white border-r border-gray-200 p-3 flex-shrink-0">
+        <div className={`w-52 bg-white border-r border-gray-200 p-3 flex-shrink-0 fixed lg:static h-full z-40 transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
           <div className="flex items-center gap-2 mb-5">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
               <Shield />
@@ -314,7 +372,7 @@ export default function Dashboard() {
                 {activeNav === "reports" && "Reports & Analytics"}
               </h2>
               <p className="text-xs text-gray-500">
-                {activeNav === "dashboard" && "Real-time monitoring powered by Compound AI"}
+                {activeNav === "dashboard" && `Real-time monitoring powered by Compound AI${lastRefresh ? ` | Last refresh: ${lastRefresh}` : ""}`}
                 {activeNav === "agents" && "Model performance, drift detection, and health monitoring"}
                 {activeNav === "realtime" && "Live claim processing and analysis"}
                 {activeNav === "reports" && "Historical data and trend analysis"}
@@ -348,16 +406,16 @@ export default function Dashboard() {
           {/* DASHBOARD TAB */}
           {activeNav === "dashboard" && (
             <>
-              <div className="grid grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 {[
-                  { title: "Total Claims", value: "1,250", change: "+25", trend: "up" },
-                  { title: "Fraud Detected", value: "45", change: "+2", trend: "up" },
-                  { title: "Pending Review", value: "12", change: "-5", trend: "down" },
-                  { title: "Savings", value: "$450K", change: "+$15k", trend: "up" },
+                  { title: "Total Claims", value: kpis.totalClaims.toLocaleString(), change: "+25", trend: "up", color: "text-gray-900" },
+                  { title: "Fraud Detected", value: kpis.fraudDetected.toString(), change: "+2", trend: "up", color: "text-red-600" },
+                  { title: "Pending Review", value: kpis.pendingReview.toString(), change: "-5", trend: "down", color: "text-orange-600" },
+                  { title: "Savings", value: `$${Math.round(kpis.savingsAmount / 1000)}K`, change: "+$15k", trend: "up", color: "text-green-600" },
                 ].map((kpi, idx) => (
                   <div key={idx} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                     <p className="text-xs text-gray-500 mb-1">{kpi.title}</p>
-                    <p className="text-xl font-bold text-gray-900">{kpi.value}</p>
+                    <p className={`text-xl font-bold ${kpi.color}`}>{kpi.value}</p>
                     <p className={`text-xs mt-1 flex items-center gap-1 ${kpi.trend === "up" ? "text-green-600" : "text-red-600"}`}>
                       {kpi.trend === "up" ? <TrendingUp /> : <TrendingDown />}
                       {kpi.change}
@@ -369,26 +427,39 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <h3 className="font-semibold text-gray-900 mb-3 text-sm">Risk Distribution</h3>
-                  <ResponsiveContainer width="100%" height={180}>
+                  <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
-                      <Pie data={riskDistribution} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value">
+                      <Pie
+                        data={riskDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, value }) => `${name} ${value}%`}
+                        labelLine={{ strokeWidth: 1 }}
+                      >
                         {riskDistribution.map((entry, idx) => (
                           <Cell key={idx} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip formatter={(value) => `${value}%`} />
+                      <Legend verticalAlign="bottom" height={36} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Agent Contribution</h3>
-                  <ResponsiveContainer width="100%" height={180}>
+                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Agent Contribution (Detection Rate %)</h3>
+                  <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={agentContribution}>
-                      <XAxis dataKey="name" tick={{ fontSize: 9 }} />
-                      <YAxis tick={{ fontSize: 9 }} />
-                      <Tooltip />
-                      <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} unit="%" />
+                      <Tooltip formatter={(value) => `${value}%`} />
+                      <Legend />
+                      <Bar dataKey="rate" name="Detection Rate" radius={[6, 6, 0, 0]}>
                         {agentContribution.map((entry, idx) => (
                           <Cell key={idx} fill={entry.color} />
                         ))}
@@ -399,24 +470,47 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Recent Claims</h3>
-                <div className="space-y-2">
-                  {recentClaims.map((claim, idx) => (
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900 text-sm">Recent Claims</h3>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={claimSearch}
+                      onChange={(e) => setClaimSearch(e.target.value)}
+                      placeholder="Search by ID, provider, risk..."
+                      className="pl-7 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+                    />
+                    <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <Search />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {filteredClaims.map((claim, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                      className="p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors border border-transparent hover:border-blue-200"
                       onClick={() => setSelectedClaim(claim)}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-900">{claim.id}</span>
-                        {getStatusIcon(claim.status)}
-                        <span className="text-xs text-gray-500">{formatCurrency(claim.amount)}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getRiskColor(claim.risk)}`}>
-                          {claim.risk.toUpperCase()}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(claim.status)}
+                          <span className="text-xs font-medium text-gray-900">{claim.id}</span>
+                          <span className="text-xs text-gray-400">{claim.provider}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-700">${formatCurrency(claim.amount)}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${getRiskColor(claim.risk)}`}>
+                            {claim.risk.toUpperCase()}
+                          </span>
+                          <span className="text-xs text-gray-400 font-mono">{(claim.score * 100).toFixed(0)}%</span>
+                        </div>
                       </div>
                     </div>
                   ))}
+                  {filteredClaims.length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-4">No claims match your search</p>
+                  )}
                 </div>
               </div>
             </>
@@ -425,7 +519,7 @@ export default function Dashboard() {
           {/* REALTIME TAB */}
           {activeNav === "realtime" && (
             <>
-              <div className="grid grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                   <p className="text-xs text-gray-500 mb-2">Current Throughput</p>
                   <p className="text-2xl font-bold text-gray-900">{throughput.current}</p>
@@ -447,6 +541,22 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-500">in pipeline</p>
                 </div>
               </div>
+
+              {/* Throughput Chart */}
+              {throughputHistory.length > 1 && (
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm mb-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Throughput Trend (claims/min)</h3>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <AreaChart data={throughputHistory}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="time" tick={{ fontSize: 9 }} />
+                      <YAxis tick={{ fontSize: 9 }} domain={[40, 100]} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="value" stroke="#3B82F6" fill="#3B82F633" name="Throughput" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
 
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
@@ -487,7 +597,7 @@ export default function Dashboard() {
           {/* AGENTS TAB */}
           {activeNav === "agents" && (
             <>
-              <div className="grid grid-cols-5 gap-3 mb-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
                 {modelPerformance.map((model, idx) => (
                   <div key={idx} className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
                     <h4 className="text-xs font-semibold text-gray-900 mb-2">{model.name}</h4>
