@@ -65,7 +65,7 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
       {/* Floating chat button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center z-40 transition-transform hover:scale-105"
+        className="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 flex items-center justify-center z-40 transition-transform hover:scale-105"
       >
         {isOpen ? (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,9 +80,9 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-40 overflow-hidden">
+        <div className="fixed bottom-20 right-6 w-96 h-[500px] bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 flex flex-col z-40 overflow-hidden">
           {/* Header */}
-          <div className="p-3 border-b border-gray-200 bg-blue-600 text-white rounded-t-2xl">
+          <div className="p-3 border-b border-slate-700 bg-blue-600 text-white rounded-t-2xl">
             <h3 className="text-sm font-semibold">AI Assistant</h3>
             <p className="text-xs text-blue-100">Ask about claims, fraud patterns, or dashboard data</p>
           </div>
@@ -91,7 +91,7 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {messages.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-xs text-gray-400 mb-3">Try asking:</p>
+                <p className="text-xs text-slate-500 mb-3">Try asking:</p>
                 <div className="space-y-2">
                   {[
                     "Which claims have the highest risk?",
@@ -101,7 +101,7 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
                     <button
                       key={suggestion}
                       onClick={() => setInput(suggestion)}
-                      className="block w-full text-xs text-left px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600"
+                      className="block w-full text-xs text-left px-3 py-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 text-slate-400"
                     >
                       {suggestion}
                     </button>
@@ -116,7 +116,7 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
                   className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
                     msg.role === "user"
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-800"
+                      : "bg-slate-700 text-slate-200"
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.content}</div>
@@ -126,11 +126,11 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 px-3 py-2 rounded-xl">
+                <div className="bg-slate-700 px-3 py-2 rounded-xl">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
               </div>
@@ -140,11 +140,11 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-gray-200">
+          <div className="p-3 border-t border-slate-700">
             {!apiKey && (
               <button
                 onClick={onConfigureApi}
-                className="w-full py-2 mb-2 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-xs font-medium"
+                className="w-full py-2 mb-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs font-medium"
               >
                 Configure OpenAI API key to start chatting
               </button>
@@ -157,12 +157,12 @@ export default function ChatPanel({ apiKey, dashboardContext, onConfigureApi }: 
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder={apiKey ? "Ask about your data..." : "API key required"}
                 disabled={!apiKey}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
+                className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || loading || !apiKey}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-500 disabled:opacity-50"
               >
                 Send
               </button>

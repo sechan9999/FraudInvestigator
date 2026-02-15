@@ -11,7 +11,7 @@ export async function callOpenAI(
   const res = await fetch("/api/openai", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ apiKey, systemPrompt, messages }),
+    body: JSON.stringify({ apiKey: apiKey || "", systemPrompt, messages }),
   });
 
   const data = await res.json();
@@ -29,6 +29,16 @@ export async function testApiKey(apiKey: string): Promise<boolean> {
       { role: "user", content: "test" },
     ]);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function checkServerKey(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/openai/status");
+    const data = await res.json();
+    return data.configured;
   } catch {
     return false;
   }

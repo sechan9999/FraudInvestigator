@@ -3,8 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   const { apiKey, messages, systemPrompt } = await req.json();
 
-  if (!apiKey) {
-    return NextResponse.json({ error: "API key is required" }, { status: 400 });
+  // Use client-provided key or fall back to server env var
+  const key = apiKey || process.env.OPENAI_API_KEY;
+
+  if (!key) {
+    return NextResponse.json({ error: "API key is required. Set OPENAI_API_KEY env var or provide a key in the UI." }, { status: 400 });
   }
 
   try {
@@ -12,7 +15,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
